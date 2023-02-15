@@ -319,7 +319,7 @@ const App = () => {
         {mints && renderMints()}
         
         <div className="footer-container">
-					<img alt="Twitter Logo" className="twitter-logo" />
+					
 				</div>
 			</div>
 		</div>
