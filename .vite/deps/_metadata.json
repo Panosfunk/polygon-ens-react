@@ -1,0 +1,44 @@
+{
+  "hash": "d3e65f78",
+  "browserHash": "9f5dac07",
+  "optimized": {
+    "react/jsx-runtime": {
+      "src": "../../react/jsx-runtime.js",
+      "file": "react_jsx-runtime.js",
+      "fileHash": "a98066c9",
+      "needsInterop": true
+    },
+    "react/jsx-dev-runtime": {
+      "src": "../../react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "888292d0",
+      "needsInterop": true
+    },
+    "react": {
+      "src": "../../react/index.js",
+      "file": "react.js",
+      "fileHash": "dc7eadc3",
+      "needsInterop": true
+    },
+    "react-dom": {
+      "src": "../../react-dom/index.js",
+      "file": "react-dom.js",
+      "fileHash": "b0dfd414",
+      "needsInterop": true
+    },
+    "ethers": {
+      "src": "../../ethers/lib.esm/index.js",
+      "file": "ethers.js",
+      "fileHash": "a08e655f",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-WQRJPARS": {
+      "file": "chunk-WQRJPARS.js"
+    },
+    "chunk-HUBM7RA2": {
+      "file": "chunk-HUBM7RA2.js"
+    }
+  }
+}

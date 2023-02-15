@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import './styles/App.css';
 import {ethers} from "ethers";
 const tld = '.funk';
-const CONTRACT_ADDRESS = "0xbf5A440DDe6B00741a6D57F98a02cD3DB65D7725";
+const CONTRACT_ADDRESS = "0x807178d6582770dFd218d9300C9d4738BA1FAFAa";
 
 import contractAbi from './utils/contractABI.json';
 
@@ -259,7 +259,7 @@ const App = () => {
               return (
                 <div className="mint-item" key={index}>
                   <div className="mint-row">
-                    <a className="link" href={"https://testnets.opensea.io/assets/mumbai/${CONTRACT_ADDRESS"}>
+                    <a className="link" href={`https://testnets.opensea.io/assets/mumbai/${CONTRACT_ADDRESS}/${mint.id}`} target="_blank" rel="noopener noreferrer">
                       <p className="underlined">{' '}{mint.name}{tld}{' '}</p>
                     </a>
                     {mint.owner.toLowerCase() === currentAccount.toLowerCase() ?

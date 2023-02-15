@@ -1,5 +1,5 @@
 ### Welcome 👋
-This is an application that runs on [this site](polygon-ens-react.vercel.app). The application represents a [DNS](https://en.wikipedia.org/wiki/Domain_Name_System) (Domain Name System) but built on the [Polygon](https://wiki.polygon.technology/) Blockchain. 
+The application represents a [DNS](https://en.wikipedia.org/wiki/Domain_Name_System) (Domain Name System) but built on the [Polygon](https://wiki.polygon.technology/) Blockchain. 
 
 Instead of the classic DNS, this application is an ENS (Ethereum Name service). This means that every registered domain creates an NFT.
 
@@ -40,3 +40,7 @@ Based on the size of the domain name, the price differs. Just like a classic dns
 - more than 4 characters long the cost is 0.1 MATIC.
 
 [Here](https://github.com/Panosfunk/polygon-ens/blob/c5a11358e1114e9df80a49d32458568240690ebd/contracts/Domains.sol#L81) is the link to the Solidity smart contract that is actually running behind the app. There you will find the prices.
+
+### **NOTE** 
+
+If you just minted an NTF and the link to opensea does not work, it could possibly be due to the fact that opensea takes a few minutes to detect recently minted NFT's. It's just the way it is unfortunately.
