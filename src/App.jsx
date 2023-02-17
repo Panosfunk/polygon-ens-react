@@ -2,13 +2,17 @@ import React, { useEffect, useState } from "react";
 import './styles/App.css';
 import {ethers} from "ethers";
 const tld = '.funk';
-const CONTRACT_ADDRESS = "0x807178d6582770dFd218d9300C9d4738BA1FAFAa";
+const CONTRACT_ADDRESS = "0x0E32582b89cA401fEFe3536B81D8373f12a3dc45";
 
 import contractAbi from './utils/contractABI.json';
 
 import polygonLogo from './assets/polygonlogo.png';
 import ethLogo from './assets/ethlogo.png';
 import { networks } from './utils/networks';
+
+import { Buffer } from 'buffer';
+Buffer.from('anything','base64');
+import axios from "axios";
 
 const App = () => {
 
@@ -19,6 +23,7 @@ const App = () => {
   const [record, setRecord] = useState('');
   const [network, setNetwork] = useState('');
   const [mints, setMints] = useState([]);
+  const [isOwner, setIsOwner] = useState(false);
 
   const connectWallet = async() => {
     try {
@@ -98,6 +103,8 @@ const App = () => {
     setNetwork(networks[chainId]);
 
     ethereum.on('chainChanged', handleChainChanged);
+    ethereum.on('accountsChanged', handleChainChanged);
+    ethereum.on('disconnect', handleChainChanged);
 
     function handleChainChanged(_chainId) {
       window.location.reload();
@@ -123,16 +130,40 @@ const App = () => {
         const contract = new ethers.Contract(CONTRACT_ADDRESS, contractAbi.abi, signer);
 
         console.log("Going to pop wallet now to pay gas...")
-        let tx = await contract.register(domain, {value: ethers.utils.parseEther(price)});
+        let jsonBase64 = await contract.generateJsonData(domain);
+        jsonBase64 = Buffer.from(jsonBase64, 'base64');
+        let jsonToSend = JSON.parse(jsonBase64);
 
-        console.log(await tx.wait());
-        const receipt = await tx.wait();
+        var config = {
+          method: 'post',
+          url: 'https://api.pinata.cloud/pinning/pinJSONToIPFS',
+          headers: { 
+            'Content-Type': 'application/json', 
+            'pinata_api_key': '522dfe150059448afbff',
+            'pinata_secret_api_key': 'af735d0314b111fa116a095f02e3c0b777cebf3bdc5595cbae567e79c7c9ac86',
+          },
+          data : 
+          {
+            "name": jsonToSend.name,
+            "description": jsonToSend.description,
+            "image": jsonToSend.image,
+            "length": jsonToSend.length
+          }
+        };
 
+        const res = await axios(config);
+        const tokenURI = `ipfs://${res.data.IpfsHash}`;
+        console.log("TokenURI: ", tokenURI);
+        
+        let nftTxn = await contract.register(tokenURI, domain, {value: ethers.utils.parseEther(price)});
+        console.log("Mining...")
+        const receipt = await nftTxn.wait();
+        
         if (receipt.status === 1) {
-          console.log("Domain minted! https://mumbai.polygonscan.com/tx/"+tx.hash);
-          tx = await contract.setRecord(domain, record);
-          await tx.wait();
-          console.log("Record set! https://mumbai.polygonscan.com/tx/"+tx.hash);
+          console.log("Domain minted! https://mumbai.polygonscan.com/tx/"+nftTxn.hash);
+          nftTxn = await contract.setRecord(domain, record);
+          await nftTxn.wait();
+          console.log("Record set! https://mumbai.polygonscan.com/tx/"+nftTxn.hash);
 
           setTimeout(() => {
             fetchMints();
@@ -180,14 +211,19 @@ const App = () => {
     try {
       const { ethereum } = window;
       if (ethereum) {
+        console.log("FETCHing mints");
         const provider = new ethers.providers.Web3Provider(ethereum);
         const signer = provider.getSigner();
         const contract = new ethers.Contract(CONTRACT_ADDRESS, contractAbi.abi, signer);
         const names = await contract.getAllNames();
 
+        console.log("nbames i guess", names);
         const mintRecords = await Promise.all(names.map(async(name) => {
+          console.log("name im looking for", name);
           const mintRecord = await contract.records(name);
           const owner = await contract.domains(name);
+          
+          console.log("current mintrecord-owner", mintRecord, "-", owner);
           return {
             id: names.indexOf(name),
             name: name,
@@ -231,7 +267,7 @@ const App = () => {
         {editing ? (
           <div className="button-container">
             <button className="cta-button mint-button" disabled={loading} onClick={updateDomain}>
-              Set record
+              Set description
             </button>
             <button className="cta-button mint-button" disabled={loading} onClick={() => {setEditing(false)}}>
                 Cancel
@@ -243,8 +279,6 @@ const App = () => {
             Mint
           </button>
         )}
-          
-          
       </div>
     )
   }
@@ -281,19 +315,78 @@ const App = () => {
     }
   }
 
+  const renderWithdraw = () => {
+    if (network !== 'Polygon Mumbai Testnet') {
+      return (
+        <div className="connect-wallet-container">
+          <p>Please connect to the Polygon Mumbai Testnet</p>
+          <button className='cta-button mint-button' onClick={switchNetwork}>Click here to switch</button>
+        </div>
+      );
+    }
+    return(
+      <div className="form-container">
+        <button className="cta-button mint-button" disabled={null} onClick={withdraw}>
+          Withdraw
+        </button>
+      </div>
+    )
+  }
+  
   const editRecord = (name) => {
     console.log("Editing record for", name);
     setEditing(true);
     setDomain(name);
   }
 
+  const checkIfOwner = async() => {
+    try {
+      const { ethereum } = window;
+      if (ethereum) {
+        const provider = new ethers.providers.Web3Provider(ethereum);
+        const signer = provider.getSigner();
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, contractAbi.abi, signer);
+
+        const checkedIfOwner = await contract.isOwner();
+        console.log("IS the person watching this the owner?????", checkedIfOwner);
+        if (checkedIfOwner) {
+          setIsOwner(true);
+          return;
+        }else {
+          setIsOwner(false);
+          console.log("Please sign in as the owner to withdraw")
+        }
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const withdraw = async () => {
+    try {
+      const { ethereum } = window;
+      if (ethereum) {
+        const provider = new ethers.providers.Web3Provider(ethereum);
+        const signer = provider.getSigner();
+        const contract = new ethers.Contract(CONTRACT_ADDRESS, contractAbi.abi, signer);
+
+        const wdTxn = await contract.withdraw();
+        
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   useEffect(() => {
     checkIfWalletIsConnected();
-  })
+  });
 
   useEffect(() => {
     if (network === 'Polygon Mumbai Testnet') {
       fetchMints();
+      checkIfOwner();
+      // window.location.reload();
     }
   }, [currentAccount, network]);
 
@@ -317,6 +410,7 @@ const App = () => {
         {!currentAccount && renderNotConnectedContainer()}
         {currentAccount && renderInputForm()}
         {mints && renderMints()}
+        {isOwner && renderWithdraw()}
         
         <div className="footer-container">
 					
